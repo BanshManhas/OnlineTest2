@@ -1,0 +1,183 @@
+import java.util.HashMap;
+import java.util.Map;
+
+class LibraryException extends Exception {
+    private String errorCode;
+
+    public LibraryException(String message, String errorCode) {
+        super(message);
+        this.errorCode = errorCode;
+    }
+
+    public String getErrorCode() {
+        return errorCode;
+    }
+
+    public String toString() {
+        return "LibraryException[" + errorCode + "]: " + getMessage();
+    }
+}
+
+class Book {
+    private String bookId;
+    private String title;
+    private String author;
+    private boolean isAvailable;
+
+    public Book(String bookId, String title, String author) {
+        this.bookId = bookId;
+        this.title = title;
+        this.author = author;
+        this.isAvailable = true;
+    }
+
+    public String getBookId() {
+        return bookId;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public boolean isAvailable() {
+        return isAvailable;
+    }
+
+    public void setBookId(String bookId) {
+        this.bookId = bookId;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setAuthor(String author) {
+        this.author = author;
+    }
+
+    public void setAvailable(boolean available) {
+        this.isAvailable = available;
+    }
+
+    public String toString() {
+        return "Book[ID=" + bookId + ", Title='" + title + "', Author='" + author + "', Available=" + isAvailable + "]";
+    }
+}
+
+class Library {
+    private HashMap<String, Book> books;
+
+    public Library() {
+        books = new HashMap<>();
+        initializeBooks();
+    }
+
+    private void initializeBooks() {
+        books.put("B001", new Book("B001", "Clean Code", "Robert C. Martin"));
+        books.put("B002", new Book("B002", "The Pragmatic Programmer", "Hunt & Thomas"));
+        books.put("B003", new Book("B003", "Effective Java", "Joshua Bloch"));
+        books.put("B004", new Book("B004", "Head First Java", "Kathy Sierra"));
+        books.put("B005", new Book("B005", "Design Patterns", "GoF"));
+    }
+
+    public void addBook(Book book) throws LibraryException {
+        if (books.containsKey(book.getBookId())) {
+            throw new LibraryException("Book with ID '" + book.getBookId() + "' already exists.", "DUPLICATE_ID");
+        }
+        books.put(book.getBookId(), book);
+        System.out.println("[Added] " + book.getTitle());
+    }
+
+    public void issueBook(String bookId) throws LibraryException {
+        Book book = findBook(bookId);
+        if (!book.isAvailable()) {
+            throw new LibraryException("Book '" + book.getTitle() + "' is already issued.", "ALREADY_ISSUED");
+        }
+        book.setAvailable(false);
+        System.out.println("[Issued] " + book.getTitle());
+    }
+
+    public void returnBook(String bookId) throws LibraryException {
+        Book book = findBook(bookId);
+        if (book.isAvailable()) {
+            throw new LibraryException("Book '" + book.getTitle() + "' was not issued. Invalid return.", "INVALID_RETURN");
+        }
+        book.setAvailable(true);
+        System.out.println("[Returned] " + book.getTitle());
+    }
+
+    public void displayAvailableBooks() {
+        System.out.println("\n========= Available Books =========");
+        boolean found = false;
+        for (Map.Entry<String, Book> entry : books.entrySet()) {
+            if (entry.getValue().isAvailable()) {
+                System.out.println("  " + entry.getValue());
+                found = true;
+            }
+        }
+        if (!found) {
+            System.out.println("  No books currently available.");
+        }
+        System.out.println("===================================\n");
+    }
+
+    private Book findBook(String bookId) throws LibraryException {
+        Book book = books.get(bookId);
+        if (book == null) {
+            throw new LibraryException("Book with ID '" + bookId + "' not found.", "NOT_FOUND");
+        }
+        return book;
+    }
+}
+
+public class LibraryManagement {
+    public static void main(String[] args) {
+        Library library = new Library();
+
+        library.displayAvailableBooks();
+
+        System.out.println("=== Normal Operations ===");
+        try {
+            library.addBook(new Book("B006", "Introduction to Algorithms", "CLRS"));
+            library.issueBook("B001");
+            library.issueBook("B003");
+            library.returnBook("B001");
+        } catch (LibraryException e) {
+            System.out.println("Error: " + e);
+        }
+
+        library.displayAvailableBooks();
+
+        System.out.println("=== Exception Handling Demo ===");
+
+        try {
+            library.issueBook("B999");
+        } catch (LibraryException e) {
+            System.out.println("Caught -> " + e);
+        }
+
+        try {
+            library.issueBook("B003");
+        } catch (LibraryException e) {
+            System.out.println("Caught -> " + e);
+        }
+
+        try {
+            library.returnBook("B002");
+        } catch (LibraryException e) {
+            System.out.println("Caught -> " + e);
+        }
+
+        try {
+            library.addBook(new Book("B001", "Duplicate Book", "Nobody"));
+        } catch (LibraryException e) {
+            System.out.println("Caught -> " + e);
+        }
+
+        System.out.println("\nDone.");
+    }
+}
